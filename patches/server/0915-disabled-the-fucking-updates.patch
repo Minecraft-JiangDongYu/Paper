@@ -1,0 +1,161 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: frankhan <hanjiale758@gmail.com>
+Date: Sat, 30 Mar 2024 16:41:42 +0000
+Subject: [PATCH] disabled the fucking updates
+
+
+diff --git a/src/main/java/net/minecraft/world/level/block/NoteBlock.java b/src/main/java/net/minecraft/world/level/block/NoteBlock.java
+index 0e106bcc1f882877a5e444a2621466c6e4696d42..c81484bc2d58ed6b080b8e7441de75d408ad74cf 100644
+--- a/src/main/java/net/minecraft/world/level/block/NoteBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/NoteBlock.java
+@@ -34,28 +34,16 @@ public class NoteBlock extends Block {
+ 
+     @Override
+     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+-        return (BlockState) this.defaultBlockState().setValue(NoteBlock.INSTRUMENT, NoteBlockInstrument.byState(ctx.getLevel().getBlockState(ctx.getClickedPos().below())));
++        return this.defaultBlockState();
+     }
+ 
+     @Override
+     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+-        return direction == Direction.DOWN ? (BlockState) state.setValue(NoteBlock.INSTRUMENT, NoteBlockInstrument.byState(neighborState)) : super.updateShape(state, direction, neighborState, world, pos, neighborPos);
++        return state;
+     }
+ 
+     @Override
+-    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+-        boolean flag1 = world.hasNeighborSignal(pos);
+-
+-        if (flag1 != (Boolean) state.getValue(NoteBlock.POWERED)) {
+-            if (flag1) {
+-                this.playNote(world, pos, state); // CraftBukkit
+-                state = world.getBlockState(pos); // CraftBukkit - SPIGOT-5617: update in case changed in event
+-            }
+-
+-            world.setBlock(pos, (BlockState) state.setValue(NoteBlock.POWERED, flag1), 3);
+-        }
+-
+-    }
++    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {}
+ 
+     private void playNote(Level world, BlockPos blockposition, BlockState data) { // CraftBukkit
+         if (world.getBlockState(blockposition.above()).isAir()) {
+@@ -73,7 +61,6 @@ public class NoteBlock extends Block {
+         if (world.isClientSide) {
+             return InteractionResult.SUCCESS;
+         } else {
+-            state = (BlockState) state.cycle(NoteBlock.NOTE);
+             world.setBlock(pos, state, 3);
+             this.playNote(world, pos, state); // CraftBukkit
+             player.awardStat(Stats.TUNE_NOTEBLOCK);
+diff --git a/src/main/java/net/minecraft/world/level/block/TripWireBlock.java b/src/main/java/net/minecraft/world/level/block/TripWireBlock.java
+index 7d89b9ed84209c161b2c6fec5304abbbf41f2e80..fad19145278a11ce0e957956640fa3c953959f41 100644
+--- a/src/main/java/net/minecraft/world/level/block/TripWireBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/TripWireBlock.java
+@@ -53,45 +53,24 @@ public class TripWireBlock extends Block {
+ 
+     @Override
+     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+-        Level world = ctx.getLevel();
+-        BlockPos blockposition = ctx.getClickedPos();
+-
+-        return (BlockState) ((BlockState) ((BlockState) ((BlockState) this.defaultBlockState().setValue(TripWireBlock.NORTH, this.shouldConnectTo(world.getBlockState(blockposition.north()), Direction.NORTH))).setValue(TripWireBlock.EAST, this.shouldConnectTo(world.getBlockState(blockposition.east()), Direction.EAST))).setValue(TripWireBlock.SOUTH, this.shouldConnectTo(world.getBlockState(blockposition.south()), Direction.SOUTH))).setValue(TripWireBlock.WEST, this.shouldConnectTo(world.getBlockState(blockposition.west()), Direction.WEST));
++        return this.defaultBlockState();
+     }
+ 
+     @Override
+     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+-        return direction.getAxis().isHorizontal() ? (BlockState) state.setValue((Property) TripWireBlock.PROPERTY_BY_DIRECTION.get(direction), this.shouldConnectTo(neighborState, direction)) : super.updateShape(state, direction, neighborState, world, pos, neighborPos);
++        return state;
+     }
+ 
+     @Override
+-    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
+-        if (!oldState.is(state.getBlock())) {
+-            this.updateSource(world, pos, state);
+-        }
+-    }
++    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {    }
+ 
+     @Override
+-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
+-        if (!moved && !state.is(newState.getBlock())) {
+-            this.updateSource(world, pos, (BlockState) state.setValue(TripWireBlock.POWERED, true), true); // Paper - fix state inconsistency
+-        }
+-    }
++    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {    }
+ 
+     @Override
+-    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+-        if (!world.isClientSide && !player.getMainHandItem().isEmpty() && player.getMainHandItem().is(Items.SHEARS)) {
+-            world.setBlock(pos, (BlockState) state.setValue(TripWireBlock.DISARMED, true), 4);
+-            world.gameEvent(player, GameEvent.SHEAR, pos);
+-        }
+-
+-        super.playerWillDestroy(world, pos, state, player);
+-    }
++    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {}
+ 
+-    private void updateSource(Level world, BlockPos pos, BlockState state) {
+-        // Paper start - fix state inconsistency
+-        this.updateSource(world, pos, state, false);
+-    }
++    private void updateSource(Level world, BlockPos pos, BlockState state) {}
+ 
+     private void updateSource(Level world, BlockPos pos, BlockState state, boolean beingRemoved) {
+         // Paper end
+@@ -126,21 +105,10 @@ public class TripWireBlock extends Block {
+     }
+ 
+     @Override
+-    public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
+-        if (!new io.papermc.paper.event.entity.EntityInsideBlockEvent(entity.getBukkitEntity(), org.bukkit.craftbukkit.block.CraftBlock.at(world, pos)).callEvent()) { return; } // Paper
+-        if (!world.isClientSide) {
+-            if (!(Boolean) state.getValue(TripWireBlock.POWERED)) {
+-                this.checkPressed(world, pos);
+-            }
+-        }
+-    }
++    public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {}
+ 
+     @Override
+-    public void tick(BlockState state, ServerLevel world, BlockPos pos, Random random) {
+-        if ((Boolean) world.getBlockState(pos).getValue(TripWireBlock.POWERED)) {
+-            this.checkPressed(world, pos);
+-        }
+-    }
++    public void tick(BlockState state, ServerLevel world, BlockPos pos, Random random) {}
+ 
+     private void checkPressed(Level world, BlockPos pos) {
+         BlockState iblockdata = world.getBlockState(pos);
+@@ -213,28 +181,12 @@ public class TripWireBlock extends Block {
+ 
+     @Override
+     public BlockState rotate(BlockState state, Rotation rotation) {
+-        switch (rotation) {
+-            case CLOCKWISE_180:
+-                return (BlockState) ((BlockState) ((BlockState) ((BlockState) state.setValue(TripWireBlock.NORTH, (Boolean) state.getValue(TripWireBlock.SOUTH))).setValue(TripWireBlock.EAST, (Boolean) state.getValue(TripWireBlock.WEST))).setValue(TripWireBlock.SOUTH, (Boolean) state.getValue(TripWireBlock.NORTH))).setValue(TripWireBlock.WEST, (Boolean) state.getValue(TripWireBlock.EAST));
+-            case COUNTERCLOCKWISE_90:
+-                return (BlockState) ((BlockState) ((BlockState) ((BlockState) state.setValue(TripWireBlock.NORTH, (Boolean) state.getValue(TripWireBlock.EAST))).setValue(TripWireBlock.EAST, (Boolean) state.getValue(TripWireBlock.SOUTH))).setValue(TripWireBlock.SOUTH, (Boolean) state.getValue(TripWireBlock.WEST))).setValue(TripWireBlock.WEST, (Boolean) state.getValue(TripWireBlock.NORTH));
+-            case CLOCKWISE_90:
+-                return (BlockState) ((BlockState) ((BlockState) ((BlockState) state.setValue(TripWireBlock.NORTH, (Boolean) state.getValue(TripWireBlock.WEST))).setValue(TripWireBlock.EAST, (Boolean) state.getValue(TripWireBlock.NORTH))).setValue(TripWireBlock.SOUTH, (Boolean) state.getValue(TripWireBlock.EAST))).setValue(TripWireBlock.WEST, (Boolean) state.getValue(TripWireBlock.SOUTH));
+-            default:
+-                return state;
+-        }
++        return state;
+     }
+ 
+     @Override
+     public BlockState mirror(BlockState state, Mirror mirror) {
+-        switch (mirror) {
+-            case LEFT_RIGHT:
+-                return (BlockState) ((BlockState) state.setValue(TripWireBlock.NORTH, (Boolean) state.getValue(TripWireBlock.SOUTH))).setValue(TripWireBlock.SOUTH, (Boolean) state.getValue(TripWireBlock.NORTH));
+-            case FRONT_BACK:
+-                return (BlockState) ((BlockState) state.setValue(TripWireBlock.EAST, (Boolean) state.getValue(TripWireBlock.WEST))).setValue(TripWireBlock.WEST, (Boolean) state.getValue(TripWireBlock.EAST));
+-            default:
+-                return super.mirror(state, mirror);
+-        }
++        return state;
+     }
+ 
+     @Override
